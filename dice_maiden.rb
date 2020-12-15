@@ -5,6 +5,7 @@
 # !/usr/bin/ruby
 # If you wish to run a single instance of this bot, please follow the "Manual Install" section of the readme!
 require_relative 'dice_maiden_logic'
+require_relative 'seventhSea'
 
 require 'discordrb'
 require 'dicebag'
@@ -12,7 +13,7 @@ require 'dotenv'
 require 'rest-client'
 require 'sqlite3'
 
-Dotenv.load
+Dotenv.load('local.env')
 @total_shards = ENV['SHARD'].to_i
 # Add API token
 @bot = Discordrb::Bot.new token: ENV['TOKEN'], num_shards: @total_shards, shard_id: ARGV[0].to_i, intents: [:servers, :server_messages, :direct_messages], ignore_bots: true, fancy_log: true
@@ -53,6 +54,7 @@ mutex = Mutex.new
     @wng = false
     @dh = false
     @do_tally_shuffle = false
+    @seventh = false
 
     check_roll_modes
 
@@ -84,6 +86,8 @@ mutex = Mutex.new
       event.channel.start_typing()
       next if check_roll(event) == true
 
+      # Check for Seventh Sea roll
+      check_seventh
       # Check for wrath roll
       check_wrath
       # Grab dice roll, create roll, grab results
@@ -131,8 +135,11 @@ mutex = Mutex.new
 
       # Print dice result to Discord channel
       @has_comment = !@comment.to_s.empty? && !@comment.to_s.nil?
+
       if check_wrath == true
         respond_wrath(event, dnum)
+      elsif check_seventh == true
+        respond_seventh(event)
       else
         event.respond build_response
         check_fury(event)

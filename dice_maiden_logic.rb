@@ -18,6 +18,27 @@ def alias_input_pass(input)
       [/\bd6s\d+\b/i, "The D6 System", /\bd6s(\d+)\b/i, "\\1d6 + 1d6 ie"], # The D6 System
       [/\bsr\d+\b/i, "Shadowrun", /\bsr(\d+)\b/i, "\\1d6 t5"], # Shadowrun system
       [/\b\d+d%\B/i, "Percentile roll", /\b(\d+)d%\B/i, "\\1d100"], # Roll a d100
+
+      # POWERED ROLLS
+      [/\b\d+pcs\d+\b/i, "Powered Skill Check", /\b(\d+)pcs(\d+)\b/i, "1d20 +\\1 +\\2"], # POWERED Skill check: !roll 1d20 +(Skill + Charateristics)
+      [/\b\d+pcse\d+\b/i, "Powered Expertise Skill Check", /\b(\d+)pcse(\d+)\b/i, "1d20 +\\1 +(\\2 +5)"], # POWERED Skill check: !roll 1d20 +(Skill + Charateristics + 5 (expert))
+      [/\b\d+padv\d+\b/i, "Powered Advantage Combat", /\b(\d+)padv(\d+)\b/i, "\\1d20 +\\2 k1"], # POWERED Advantage roll (weapon): !roll #d20 +(Weapon Strike) Keep Highest - Player calculates everything
+      [/\b\d+pdadv\d+\b/i, "Powered Disadvantage Combat", /\b(\d+)pdadv(\d+)\b/i, "\\1d20 +\\2 kl1"], # POWERED Disadvantage roll (weapon): !roll #d20 +(Weapon Strike) Keep Lowest - Player calculates everything
+      [/\bpinit\d+\b/i, "Powered initiative (Separate)", /\bpinit(\d+)\b/i, "1d20 +\\1"], # POWERED initiative roll: roll 1d20 +(Base initative) +(Shared initative)
+      [/\b\d+pinitsep\d+\b/i, "Powered initiative (Separate)", /\b(\d+)pinitsep(\d+)\b/i, "1d20 +\\1 +\\2"], # POWERED initiative roll: roll 1d20 +(Base initative) +(Shared initative)
+      [/\bpscover\d+\b/i, "Powered Soft Cover (No Adv)", /\bpscover(\d+)\b/i, "1d20 +\\1 +3"], # POWERED soft cover dodge
+      [/\b\d+pascover\d+\b/i, "Powered Soft Cover (Adv)", /\b(\d+)pascover(\d+)\b/i, "\\1d20 +\\2 +3 k1"], # POWERED soft cover w/ Advantage
+      [/\bphcover\d+\b/i, "Powered Hard Cover (No Adv)", /\bphcover(\d+)\b/i, "1d20 +\\1 +6"], # POWERED hard cover
+      [/\b\d+pahcover\d+\b/i, "Powered Hard Cover (Adv)", /\b(\d+)pahcover(\d+)\b/i, "\\1d20 +\\2 +6 k1"], # POWERED hard cover w/ Adv
+      [/\bpfcover\d+\b/i, "Powered Fortified Cover", /\bpfcover(\d+)\b/i, "1d20 +\\1 +9"], # POWERED fortified cover
+      [/\b\d+pafcover\d+\b/i, "Powered Fortified Cover (Adv)", /\b(\d+)pafcover(\d+)\b/i, "\\1d20 +\\2 +9 k1"], # POWERED fortified cover w/ Adv
+      [/\bpattk\d+\b/i, "Powered Attack", /\bpattk(\d+)\b/i, "1d20 +\\1"], # POWERED basic attack (no modifiers) -- shoot from legs/back 
+      [/\bpattkarm\d+\b/i, "Powered Attack w/ Arm weapon", /\bpattkarm(\d+)\b/i, "1d20 +\\1 +2"], # POWERED basic attack shooting from arms no modifiers
+      [/\b\d+pattkadv\d+\b/i, "Powered Attack w/ Adv", /\b(\d+)pattkadv(\d+)\b/i, "\\1d20 +\\2 k1"], # POWERED basic attack (no modifiers) with Adv
+      [/\b\d+padvarm\d+\b/i, "Powered Attack w/ Arm and Adv", /\b(\d+)padvarm(\d+)\b/i, "\\1d20 +\\2 +2 k1"], # POWERED basic attack from arms with adv 
+
+      # 7th Sea Rolls
+      # [/\bseventh\sskill\d+\strait\s\d+\sbonus\s\d+\b/i, "7th Sea Action Roll", /\bseventh\sskill(\d+)\strait\s(\d+)\sbonus\s(\d+)\b/i, "(\\1+\\2)d10 "]
   ]
 
   @alias_types = []
@@ -111,6 +132,12 @@ def check_wrath
     @wresult = wroll.result
     @wresult_convert = @wresult.to_s
     @wrath_value = @wresult_convert.scan(/\d+/).first
+    true
+  end
+end
+
+def check_seventh
+  if(@seventh == true)
     true
   end
 end
@@ -351,6 +378,133 @@ def respond_wrath(event, dnum)
   end
 end
 
+def respond_seventh(event)
+    raises = 0
+    rollCounts = Hash.new 0
+    nonTenRoll = []
+
+    # Determine explosions
+    if (@comment.include? "Skill 5") || (@dice_modifiers.include? "e")
+      explosions = []
+      explosions = @tally.gsub(/.*,\s\[/,'') # Agreed limit is 5
+      explosions = explosions.gsub(/\]/,'')
+      explosions = explosions.split(",").map(&:to_i)
+      # print "#{@tally} -- Explosion #{explosions}"
+      explosions = explosions.sample(5) # Force the explosions to 5
+      p explosions
+    end
+
+    # Clean up tally
+    _tally = @tally.gsub(/\[/,"")
+    _tally = _tally.gsub(/\]/,"")
+    _tally = _tally.split(", ").map(&:to_i)
+
+    rollCounts = getRollCounts(_tally)
+
+    # Check for @comment for Skill level
+    ## seventh 8d10 !Skill 4
+    ## seventh 8d10 !Skill 5
+    if(@has_comment)
+      if (@comment.include? "Skill 3") || (@dice_modifiers.include? "r") # reroll 1 die
+        # print "Rerolling lowest die\n"
+        # Remove lowest die in _tally
+        tmpTally = _tally
+        _tally.delete_at(_tally.index(_tally.min))
+
+        # Roll a 1d10
+        newRoll = DiceBag::Roll.new("1d10").result.total
+        _tally.push(newRoll)
+        # p _tally
+        event.respond "#{@user} Rolled: `#{tmpTally}` and rerolled lowest `#{_tally.min}` to have a new Roll: `#{_tally}`"
+
+      end
+
+      if @comment.include? "Skill 4" # 15's = 2 raises
+        permHash = Hash.new 0
+        permHash = getValidPerms15(_tally)
+    
+        finalRoll, roll = calculateRaises15(permHash, _tally, rollCounts)
+    
+        finalRoll.delete_if &:empty?
+        leftover = roll
+        raises15 = finalRoll.length*2
+
+        if(raises == 0 || raises15 == 0 || leftover.reduce(:+) >=10) # If raises are 0, run the 10's algorithm
+          critTen, nonTenRoll = getCritTen(_tally)
+
+          permHash = Hash.new 0
+          permHash = getValidPerms(_tally)
+      
+          finalRoll10, nonTenRoll = calculateRaises(permHash, nonTenRoll, rollCounts)
+
+          finalRoll10.push(critTen)
+          finalRoll10.delete_if &:empty?
+          finalRoll += finalRoll10
+          finalRoll.delete_if &:empty?
+          leftover = nonTenRoll
+          raises = raises15 + finalRoll10.length + (critTen.length >= 1 ? critTen.length : 0)
+      
+          event.respond "#{@user} Rolls: `#{@tally}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
+        else
+          event.respond "#{@user} Rolls: `#{@tally}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
+        end
+      end
+      if (@comment.include? "Skill 5") || (@dice_modifiers.include? "e") # 10's explode
+        # 10's explode, meaning you roll 1 more die and add it to the tally. Keep doing this every time a 10 is hit
+        # If there are explosions, let's limit the count to 5
+
+        # Add explosions to tally and run Skill 4 then Skill 3
+        p "Orig: #{@tally} - Modified: #{_tally}"
+        p "#{_tally} -- #{explosions}"
+
+        permHash = getValidPerms15(_tally)
+        raises = 0
+        finalRoll, roll = calculateRaises15(permHash, _tally, rollCounts)
+
+        finalRoll.delete_if &:empty?
+        leftover = roll
+        raises15 = finalRoll.length*2
+
+        if(raises == 0 || raises15= 0|| leftover.reduce(:+) >=10 ) # If raises are 0, run the 10's algorithm
+
+          critTen, nonTenRoll = getCritTen(_tally)
+      
+          permHash = Hash.new 0
+          permHash = getValidPerms(_tally)
+      
+          finalRoll10, nonTenRoll = calculateRaises(permHash, nonTenRoll, rollCounts)
+      
+          finalRoll10.push(critTen)
+          finalRoll10.delete_if &:empty?
+          finalRoll += finalRoll10
+          finalRoll.delete_if &:empty?
+          leftover = nonTenRoll
+      
+          raises = raises15 + finalRoll10.length + (critTen.length >= 1 ? critTen.length : 0)
+      
+          event.respond "#{@user} Rolls: `#{@tally}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
+        end
+      else
+        event.respond "#{@user} Rolls: `#{@tally}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
+      end
+    else
+      critTen, nonTenRoll = getCritTen(_tally)
+
+      permHash = Hash.new 0
+      permHash = getValidPerms(_tally)
+  
+      finalRoll, nonTenRoll = calculateRaises(permHash, nonTenRoll, rollCounts)
+  
+      finalRoll.push(critTen)
+      finalRoll.delete_if &:empty?
+      leftover = nonTenRoll
+      raises = finalRoll.length + (critTen.length > 1 ? critTen.length : 0)
+  
+      event.respond "#{@user} Rolls: `#{_tally}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
+    end
+
+end
+
 def check_donate(event)
   # this is jank right now due to a bug I need to fix
   if @check =~ /^\s*(#{@prefix}1donate)\s*$/i
@@ -556,6 +710,12 @@ def check_roll_modes
   if @input.match(/#{@prefix}\s(ul)\s/i)
     @do_tally_shuffle = true
     @input.sub!("ul","")
+  end
+
+  # Check for 7th sea roll 
+  if @input.match(/#{@prefix}\s(seventh)\s/i)
+    @seventh = true
+    @input.sub!("seventh","")
   end
 
 end
