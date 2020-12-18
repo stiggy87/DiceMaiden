@@ -399,6 +399,7 @@ def respond_seventh(event)
     _tally = _tally.gsub(/\]/,"")
     _tally = _tally.split(", ").map(&:to_i)
 
+    origRoll = _tally.clone
     rollCounts = getRollCounts(_tally)
 
     # Check for @comment for Skill level
@@ -408,15 +409,32 @@ def respond_seventh(event)
       if (@comment.include? "Skill 3") || (@dice_modifiers.include? "r") # reroll 1 die
         # print "Rerolling lowest die\n"
         # Remove lowest die in _tally
-        tmpTally = _tally
+        tmpTally = _tally.clone
         _tally.delete_at(_tally.index(_tally.min))
 
         # Roll a 1d10
         newRoll = DiceBag::Roll.new("1d10").result.total
         _tally.push(newRoll)
         # p _tally
-        event.respond "#{@user} Rolled: `#{tmpTally}` and rerolled lowest `#{_tally.min}` to have a new Roll: `#{_tally}`"
+        event.respond "#{@user} Rolled: `#{origRoll}` and rerolled lowest `#{_tally.min}` to have a new Roll: `#{_tally}`"
+        origRoll = _tally.clone
 
+      end
+
+      if @comment.include? "Skill 3"
+        critTen, nonTenRoll = getCritTen(_tally)
+
+        permHash = Hash.new 0
+        permHash = getValidPerms(_tally)
+    
+        finalRoll, nonTenRoll = calculateRaises(permHash, nonTenRoll, rollCounts)
+    
+        finalRoll.push(critTen)
+        finalRoll.delete_if &:empty?
+        leftover = nonTenRoll
+        raises = finalRoll.length + (critTen.length > 1 ? critTen.length : 0)
+    
+        event.respond "#{@user} Rolls: `#{origRoll}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
       end
 
       if @comment.include? "Skill 4" # 15's = 2 raises
@@ -444,12 +462,12 @@ def respond_seventh(event)
           leftover = nonTenRoll
           raises = raises15 + finalRoll10.length + (critTen.length >= 1 ? critTen.length : 0)
       
-          event.respond "#{@user} Rolls: `#{@tally}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
+          event.respond "#{@user} Rolls: `#{origRoll}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
         else
-          event.respond "#{@user} Rolls: `#{@tally}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
+          # event.respond "#{@user} Rolls: `#{@tally}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
         end
       end
-      if (@comment.include? "Skill 5") || (@dice_modifiers.include? "e") # 10's explode
+      if (@comment.include? "Skill 5") && (@dice_modifiers.include? "e") # 10's explode
         # 10's explode, meaning you roll 1 more die and add it to the tally. Keep doing this every time a 10 is hit
         # If there are explosions, let's limit the count to 5
 
@@ -482,12 +500,13 @@ def respond_seventh(event)
       
           raises = raises15 + finalRoll10.length + (critTen.length >= 1 ? critTen.length : 0)
       
-          event.respond "#{@user} Rolls: `#{@tally}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
+          event.respond "#{@user} Rolls: `#{origRoll}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
         end
       else
-        event.respond "#{@user} Rolls: `#{@tally}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
+        # event.respond "#{@user} Rolls: `#{@tally}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
       end
     else
+      origRoll = _tally.clone
       critTen, nonTenRoll = getCritTen(_tally)
 
       permHash = Hash.new 0
@@ -500,7 +519,7 @@ def respond_seventh(event)
       leftover = nonTenRoll
       raises = finalRoll.length + (critTen.length > 1 ? critTen.length : 0)
   
-      event.respond "#{@user} Rolls: `#{_tally}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
+      event.respond "#{@user} Rolls: `#{origRoll}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
     end
 
 end
