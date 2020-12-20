@@ -406,18 +406,21 @@ def respond_seventh(event)
     ## seventh 8d10 !Skill 4
     ## seventh 8d10 !Skill 5
     if(@has_comment)
-      if (@comment.include? "Skill 3") || (@dice_modifiers.include? "r") # reroll 1 die
+      if (@dice_modifiers.include? "r") # reroll 1 die
         # print "Rerolling lowest die\n"
         # Remove lowest die in _tally
         tmpTally = _tally.clone
+        lowestRoll = _tally.min.clone
         _tally.delete_at(_tally.index(_tally.min))
 
         # Roll a 1d10
         newRoll = DiceBag::Roll.new("1d10").result.total
         _tally.push(newRoll)
-        # p _tally
-        event.respond "#{@user} Rolled: `#{origRoll}` and rerolled lowest `#{_tally.min}` to have a new Roll: `#{_tally}`"
+        event.respond "#{@user} Rolled: `#{origRoll}` and rerolled lowest `#{lowestRoll}` to have a new Roll: `#{_tally}`"
         origRoll = _tally.clone
+        # p "#{_tally} == #{origRoll}"
+        rollCounts = getRollCounts(_tally)
+        pp rollCounts
 
       end
 
@@ -432,22 +435,25 @@ def respond_seventh(event)
         finalRoll.push(critTen)
         finalRoll.delete_if &:empty?
         leftover = nonTenRoll
-        raises = finalRoll.length + (critTen.length > 1 ? critTen.length : 0)
+        raises = finalRoll.length + (critTen.length >= 1 ? critTen.length : 0)
     
         event.respond "#{@user} Rolls: `#{origRoll}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
       end
 
       if @comment.include? "Skill 4" # 15's = 2 raises
+        p "Counting 15's..."
         permHash = Hash.new 0
         permHash = getValidPerms15(_tally)
     
         finalRoll, roll = calculateRaises15(permHash, _tally, rollCounts)
-    
         finalRoll.delete_if &:empty?
         leftover = roll
+        p "Leftover 1: #{leftover}"
         raises15 = finalRoll.length*2
+        # p raises15
 
-        if(raises == 0 || raises15 == 0 || leftover.reduce(:+) >=10) # If raises are 0, run the 10's algorithm
+        if(raises15 == 0) || (leftover.reduce(:+) >= 10) && (leftover.empty? == false) # If raises are 0, run the 10's algorithm
+          p "Counting 10's..."
           critTen, nonTenRoll = getCritTen(_tally)
 
           permHash = Hash.new 0
@@ -460,11 +466,15 @@ def respond_seventh(event)
           finalRoll += finalRoll10
           finalRoll.delete_if &:empty?
           leftover = nonTenRoll
+          p leftover
+          p finalRoll10.length
+          p raises15
           raises = raises15 + finalRoll10.length + (critTen.length >= 1 ? critTen.length : 0)
-      
+          
           event.respond "#{@user} Rolls: `#{origRoll}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
         else
-          # event.respond "#{@user} Rolls: `#{@tally}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
+
+          event.respond "#{@user} Rolls: `#{origRoll}` and gets Raises: `#{raises15}` from Groups: #{finalRoll} with leftover: #{leftover}"
         end
       end
       if (@comment.include? "Skill 5") && (@dice_modifiers.include? "e") # 10's explode
@@ -472,6 +482,8 @@ def respond_seventh(event)
         # If there are explosions, let's limit the count to 5
 
         # Add explosions to tally and run Skill 4 then Skill 3
+        permHash = Hash.new 0
+        explodedRoll = _tally.clone
         p "Orig: #{@tally} - Modified: #{_tally}"
         p "#{_tally} -- #{explosions}"
 
@@ -483,7 +495,7 @@ def respond_seventh(event)
         leftover = roll
         raises15 = finalRoll.length*2
 
-        if(raises == 0 || raises15= 0|| leftover.reduce(:+) >=10 ) # If raises are 0, run the 10's algorithm
+        if(raises == 0 || raises15= 0|| leftover.reduce(:+) >=10 ) && (!leftover.empty?)# If raises are 0, run the 10's algorithm
 
           critTen, nonTenRoll = getCritTen(_tally)
       
@@ -500,7 +512,7 @@ def respond_seventh(event)
       
           raises = raises15 + finalRoll10.length + (critTen.length >= 1 ? critTen.length : 0)
       
-          event.respond "#{@user} Rolls: `#{origRoll}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
+          event.respond "#{@user} Rolls: `#{explodedRoll}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
         end
       else
         # event.respond "#{@user} Rolls: `#{@tally}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
