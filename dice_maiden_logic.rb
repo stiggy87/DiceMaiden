@@ -424,7 +424,7 @@ def respond_seventh(event)
 
       end
 
-      if @comment.include? "Skill 3"
+      if @comment =! /[Ss]kill\s3/
         critTen, nonTenRoll = getCritTen(_tally)
 
         permHash = Hash.new 0
@@ -432,10 +432,11 @@ def respond_seventh(event)
     
         finalRoll, nonTenRoll = calculateRaises(permHash, nonTenRoll, rollCounts)
     
-        finalRoll.push(critTen)
-        finalRoll.delete_if &:empty?
+        # finalRoll.push(critTen)
+        # finalRoll.delete_if &:empty?
+        finalRoll += critTen
         leftover = nonTenRoll
-        raises = finalRoll.length + (critTen.length >= 1 ? critTen.length : 0)
+        raises = finalRoll.length# + (critTen.length >= 1 ? critTen.length : 0)
     
         event.respond "#{@user} Rolls: `#{origRoll}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
       end

@@ -231,3 +231,27 @@ end
 # else
 #     p "#{@user} Rolls: `#{originalRoll}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
 # end
+
+# Skill 3 change
+#_tally = [10, 10, 10, 8, 6, 6, 3, 2] #should be 5 raises not 6
+# origRoll = _tally.clone
+# rollCounts = getRollCounts(_tally)
+
+# critTen, nonTenRoll = getCritTen(_tally)
+
+# permHash = Hash.new 0
+# permHash = getValidPerms(_tally)
+
+# finalRoll, nonTenRoll = calculateRaises(permHash, nonTenRoll, rollCounts)
+
+# p critTen
+# p finalRoll
+# p finalRoll + critTen
+# finalRoll += critTen
+# # finalRoll.delete_if &:empty?
+# p finalRoll
+# leftover = nonTenRoll
+
+# raises = finalRoll.length# + (critTen.length >= 1 ? critTen.length : 0)
+
+# p "Rolls: `#{origRoll}` and gets Raises: `#{raises}` from Groups: #{finalRoll} with leftover: #{leftover}"
