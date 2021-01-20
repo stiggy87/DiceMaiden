@@ -18,6 +18,7 @@ def alias_input_pass(input)
       [/\bd6s\d+\b/i, "The D6 System", /\bd6s(\d+)\b/i, "\\1d6 + 1d6 ie"], # The D6 System
       [/\bsr\d+\b/i, "Shadowrun", /\bsr(\d+)\b/i, "\\1d6 t5"], # Shadowrun system
       [/\b\d+d%\B/i, "Percentile roll", /\b(\d+)d%\B/i, "\\1d100"], # Roll a d100
+<<<<<<< HEAD
 
       # POWERED ROLLS
       [/\b\d+pcs\d+\b/i, "Powered Skill Check", /\b(\d+)pcs(\d+)\b/i, "1d20 +\\1 +\\2"], # POWERED Skill check: !roll 1d20 +(Skill + Charateristics)
@@ -39,6 +40,9 @@ def alias_input_pass(input)
 
       # 7th Sea Rolls
       # [/\bseventh\sskill\d+\strait\s\d+\sbonus\s\d+\b/i, "7th Sea Action Roll", /\bseventh\sskill(\d+)\strait\s(\d+)\sbonus\s(\d+)\b/i, "(\\1+\\2)d10 "]
+=======
+      [/\bsp\d+\b/i, "Storypath", /\bsp(\d+)\b/i, "ul \\1d10 ie10 t8"], # storypath system
+>>>>>>> 98063b77099e9d30991eeb9541b724da19adfa26
   ]
 
   @alias_types = []
@@ -88,8 +92,8 @@ end
 def check_comment
   if @input.include?('!')
     @comment = @input.partition('!').last.lstrip
-    # remove @ from comments to prevent abuse
-    @comment.delete! '@'
+    # remove @ user ids from comments to prevent abuse
+    @comment.gsub!(/<@!\d+>/,'')
     if @comment.include? 'unsort'
       @do_tally_shuffle = true
     end
@@ -712,7 +716,7 @@ end
 
 def input_valid(event)
   event_input = event.content
-  if event_input =~ /^(#{@prefix})/i
+  if event_input =~ /^(#{@prefix}\s)/i
     return true
   else
     return false
@@ -744,10 +748,15 @@ def check_roll_modes
     @input.sub!("ul","")
   end
 
+<<<<<<< HEAD
   # Check for 7th sea roll 
   if @input.match(/#{@prefix}\s(seventh)\s/i)
     @seventh = true
     @input.sub!("seventh","")
+=======
+  if @input.match(/#{@prefix}\s(ed\d+)/i)
+    @ed = true
+>>>>>>> 98063b77099e9d30991eeb9541b724da19adfa26
   end
 
 end
