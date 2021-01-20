@@ -5,11 +5,8 @@
 # !/usr/bin/ruby
 # If you wish to run a single instance of this bot, please follow the "Manual Install" section of the readme!
 require_relative 'dice_maiden_logic'
-<<<<<<< HEAD
 require_relative 'seventhSea'
-=======
 require_relative 'earthdawn_logic'
->>>>>>> 98063b77099e9d30991eeb9541b724da19adfa26
 
 require 'discordrb'
 require 'dicebag'
@@ -58,11 +55,8 @@ mutex = Mutex.new
     @wng = false
     @dh = false
     @do_tally_shuffle = false
-<<<<<<< HEAD
     @seventh = false
-=======
     @ed = false
->>>>>>> 98063b77099e9d30991eeb9541b724da19adfa26
 
     check_roll_modes
 
