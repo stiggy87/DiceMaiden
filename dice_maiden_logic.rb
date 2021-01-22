@@ -18,25 +18,6 @@ def alias_input_pass(input)
       [/\bd6s\d+\b/i, "The D6 System", /\bd6s(\d+)\b/i, "\\1d6 + 1d6 ie"], # The D6 System
       [/\bsr\d+\b/i, "Shadowrun", /\bsr(\d+)\b/i, "\\1d6 t5"], # Shadowrun system
       [/\b\d+d%\B/i, "Percentile roll", /\b(\d+)d%\B/i, "\\1d100"], # Roll a d100
-
-      # POWERED ROLLS
-      [/\b\d+pcs\d+\b/i, "Powered Skill Check", /\b(\d+)pcs(\d+)\b/i, "1d20 +\\1 +\\2"], # POWERED Skill check: !roll 1d20 +(Skill + Charateristics)
-      [/\b\d+pcse\d+\b/i, "Powered Expertise Skill Check", /\b(\d+)pcse(\d+)\b/i, "1d20 +\\1 +(\\2 +5)"], # POWERED Skill check: !roll 1d20 +(Skill + Charateristics + 5 (expert))
-      [/\b\d+padv\d+\b/i, "Powered Advantage Combat", /\b(\d+)padv(\d+)\b/i, "\\1d20 +\\2 k1"], # POWERED Advantage roll (weapon): !roll #d20 +(Weapon Strike) Keep Highest - Player calculates everything
-      [/\b\d+pdadv\d+\b/i, "Powered Disadvantage Combat", /\b(\d+)pdadv(\d+)\b/i, "\\1d20 +\\2 kl1"], # POWERED Disadvantage roll (weapon): !roll #d20 +(Weapon Strike) Keep Lowest - Player calculates everything
-      [/\bpinit\d+\b/i, "Powered initiative (Separate)", /\bpinit(\d+)\b/i, "1d20 +\\1"], # POWERED initiative roll: roll 1d20 +(Base initative) +(Shared initative)
-      [/\b\d+pinitsep\d+\b/i, "Powered initiative (Separate)", /\b(\d+)pinitsep(\d+)\b/i, "1d20 +\\1 +\\2"], # POWERED initiative roll: roll 1d20 +(Base initative) +(Shared initative)
-      [/\bpscover\d+\b/i, "Powered Soft Cover (No Adv)", /\bpscover(\d+)\b/i, "1d20 +\\1 +3"], # POWERED soft cover dodge
-      [/\b\d+pascover\d+\b/i, "Powered Soft Cover (Adv)", /\b(\d+)pascover(\d+)\b/i, "\\1d20 +\\2 +3 k1"], # POWERED soft cover w/ Advantage
-      [/\bphcover\d+\b/i, "Powered Hard Cover (No Adv)", /\bphcover(\d+)\b/i, "1d20 +\\1 +6"], # POWERED hard cover
-      [/\b\d+pahcover\d+\b/i, "Powered Hard Cover (Adv)", /\b(\d+)pahcover(\d+)\b/i, "\\1d20 +\\2 +6 k1"], # POWERED hard cover w/ Adv
-      [/\bpfcover\d+\b/i, "Powered Fortified Cover", /\bpfcover(\d+)\b/i, "1d20 +\\1 +9"], # POWERED fortified cover
-      [/\b\d+pafcover\d+\b/i, "Powered Fortified Cover (Adv)", /\b(\d+)pafcover(\d+)\b/i, "\\1d20 +\\2 +9 k1"], # POWERED fortified cover w/ Adv
-      [/\bpattk\d+\b/i, "Powered Attack", /\bpattk(\d+)\b/i, "1d20 +\\1"], # POWERED basic attack (no modifiers) -- shoot from legs/back 
-      [/\bpattkarm\d+\b/i, "Powered Attack w/ Arm weapon", /\bpattkarm(\d+)\b/i, "1d20 +\\1 +2"], # POWERED basic attack shooting from arms no modifiers
-      [/\b\d+pattkadv\d+\b/i, "Powered Attack w/ Adv", /\b(\d+)pattkadv(\d+)\b/i, "\\1d20 +\\2 k1"], # POWERED basic attack (no modifiers) with Adv
-      [/\b\d+padvarm\d+\b/i, "Powered Attack w/ Arm and Adv", /\b(\d+)padvarm(\d+)\b/i, "\\1d20 +\\2 +2 k1"], # POWERED basic attack from arms with adv 
-
       [/\bsp\d+\b/i, "Storypath", /\bsp(\d+)\b/i, "ul \\1d10 ie10 t8"], # storypath system
   ]
 
@@ -435,7 +416,7 @@ def respond_seventh(event)
         origRoll = _tally.clone
         # p "#{_tally} == #{origRoll}"
         rollCounts = getRollCounts(_tally)
-        
+
         critTen, nonTenRoll = getCritTen(_tally)
 
         permHash = Hash.new 0
